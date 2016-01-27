@@ -25,9 +25,13 @@
     "react": "^0.14.6",
     "react-dom": "^0.14.6",
     "react-router": "^2.0.0-rc5",
+    "reflux": "^0.3.0",
     "watchify": "^3.7.0"
   },
   "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-livereload": "^3.8.1",
+    "gulp-sass": "^2.1.1",
     "react-sidenav": "0.0.15"
   }
 }

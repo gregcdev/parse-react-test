@@ -2,41 +2,42 @@ var React = require('react');
 var Parse = require('parse').Parse;
 var ParseReact = require('parse-react');
 
-var ProductForm = require('./ProductForm.jsx')
 var ProductTableRow = require('./ProductTableRow.jsx');
 
 var ProductTable = React.createClass({
-  mixins: [ParseReact.Mixin],
-
-  observe: function(props, state) {
-    return {
-      products: (new Parse.Query('Product'))
-      .ascending('createdAt')
-    };
-  },
 
   render: function() {
-    var createProduct = function(product, index) {
+
+    var rows = this.props.data.map(function(product) {
       return (
         <ProductTableRow
-          key={product.objectId ? product.objectId : Date.now()+index}
-          product={product} />
+          key={product.objectId ? product.objectId : Date.now() }
+          data={product}
+          headers={this.props.headers} />
       );
-    };
+    }.bind(this));
+
+    var headers = this.props.headers.map(function(header) {
+      return (
+        <th>{header.name}</th>
+      );
+    })
+
+
     return (
-      <div>
-        <ProductForm />
-        <table className="table table-condensed">
-          <tbody>
-            <tr>
-              <td>Name</td>
-              <td>Description</td>
-              <td>Price</td>
-            </tr>
-            {this.data.products.map(createProduct)}
-          </tbody>
-        </table>
-      </div>
+      <table className="table table-hover">
+        <thead>
+          <tr>
+            <th><input type="checkbox"/></th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows}
+        </tbody>
+      </table>
     );
   }
 
