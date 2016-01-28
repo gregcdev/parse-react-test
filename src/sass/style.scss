@@ -1,5 +1,14 @@
+@mixin vertical-align($position: relative) {
+  position: $position;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
 @import url(https://fonts.googleapis.com/css?family=Roboto:400,300,500);
 @import 'main';
 @import 'dashboard/sidebar';
 @import 'dashboard/headerbar';
-@import 'chips/chips'
+@import 'chips/chips';
+@import 'imageUpload/imageUpload';

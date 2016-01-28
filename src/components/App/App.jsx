@@ -7,6 +7,8 @@ var Actions = require('../../reflux/Actions.jsx').Business;
 var Parse = require('parse');
 var ParseReact = require('parse-react');
 
+var Toast = require('../Toast/ToastList.jsx');
+
 var App = React.createClass({
 
   mixins: [ParseReact.Mixin],
@@ -39,6 +41,7 @@ var App = React.createClass({
     return (
       <div>
         {this.props.children}
+        <Toast />
       </div>
     );
   }

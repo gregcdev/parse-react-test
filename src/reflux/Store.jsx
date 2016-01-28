@@ -2,6 +2,7 @@ var Reflux = require('reflux');
 var Actions = require('./Actions.jsx')
 var Parse = require('parse');
 var Router = require('react-router').hashHistory;
+console.log(Router);
 
 var Business = Reflux.createStore({
   listenables: [Actions.Business],
@@ -79,6 +80,10 @@ var Product = Reflux.createStore({
   getInitialState: function() {
         return this.products ? this.products : [];
   },
+  productObject: function() {
+    var P = Parse.Object.extend('Product');
+    return new P();
+  },
   getProducts: function() {
 
     if (CurrentBusiness.currentBusiness && Parse.User.current) {
@@ -98,6 +103,57 @@ var Product = Reflux.createStore({
         this.fireUpdate();
       }.bind(this));
     }
+  },
+  save: function(p) {
+    var product = this.productObject();
+    var old;
+    if (p.objectId) {
+      product.id = p.objectId;
+      if (p.owner.id !== Parse.User.current().id) {
+        return;
+      }
+    } else {
+      product.set("owner", Parse.User.current());
+      product.set("business", CurrentBusiness.currentBusiness);
+    }
+    product.set("name", p.name);
+    product.set("description", p.description);
+    product.set("price", p.price);
+    product.set("frequency", p.frequency);
+    product.set("options", p.options);
+    product.set("images", p.images);
+    if (p.index) {
+      old = this.products[p.index];
+      this.products[p.index] = p;
+    } else {
+      this.products.push(p);
+    }
+    product.save().then(function(product) {
+      Actions.Toast.add({title: "Product Successfully Saved!", style: "success"});
+      Router.push("/user/businesses/"+CurrentBusiness.currentBusiness.handle+"/products");
+    }.bind(this), function(error) {
+      Actions.Toast.add({title: "Error Saving Product!", style: "error"});
+      this.products[p.index] = old;
+      this.fireUpdate();
+    }.bind(this))
+  },
+  destroy: function(p) {
+    var product = this.productObject();
+    var old = this.products[p.index];
+    product.id = p.objectId;
+    this.products.splice(p.index, 1);
+    this.fireUpdate();
+    product.destroy({
+      success: function(product) {
+        Actions.Toast.add({title: "Product Successfully Destroyed!", style: "success"});
+        Router.push("/user/businesses/"+CurrentBusiness.currentBusiness.handle+"/products");
+      }.bind(this),
+      error: function(product, error) {
+        Actions.Toast.add({title: "Error Destroying Product!", style: "error"});
+        this.products.splice(p.index, 0, old);
+        this.fireUpdate();
+      }.bind(this)
+    });
   },
   fireUpdate: function() {
     this.trigger(this.products);
@@ -126,17 +182,15 @@ var CurrentProduct = Reflux.createStore({
     }
   },
   setWithId: function(id) {
-    if (id == this.value.objectId) {
-      return
-    };
     if (Product.products.length == 0) {
       this.id = id;
       return;
     }
     var temp;
-    Product.products.map(function(product) {
+    Product.products.map(function(product, index) {
       if (product.objectId == id) {
         temp = product;
+        temp.index = index;
       }
     }.bind(this))
     this.value = temp;
@@ -146,9 +200,40 @@ var CurrentProduct = Reflux.createStore({
     this.trigger(this.value);
   }
 });
+
+var Toast = Reflux.createStore({
+  listenables: [Actions.Toast],
+  init: function() {
+    this.messages = [],
+    this.lastMessage = {},
+    this.id = 0;
+  },
+  getInitialState: function() {
+    return this.messages;
+  },
+  add: function(object) {
+    object.id = this.id;
+    this.id++;
+    this.messages.push(object);
+    this.lastMessage = object;
+    this.fireUpdate();
+  },
+  remove: function(object) {
+    var idx = this.messages.indexOf(object);
+    if (idx > -1) {
+      this.messages.splice(idx, 1);
+      this.fireUpdate();
+    }
+  },
+  fireUpdate: function() {
+    this.trigger(this.lastMessage, this.messages);
+  }
+});
+
 module.exports = {
   Business,
   CurrentBusiness,
   Product,
-  CurrentProduct
+  CurrentProduct,
+  Toast
 };

@@ -12,6 +12,8 @@ var CurrentBusiness = Reflux.createActions([
 
 var Product = Reflux.createActions([
   'getProducts',
+  'save',
+  'destroy',
 ]);
 
 var CurrentProduct = Reflux.createActions([
@@ -19,9 +21,15 @@ var CurrentProduct = Reflux.createActions([
   'set',
 ]);
 
+var Toast = Reflux.createActions([
+  'add',
+  'remove'
+]);
+
 module.exports = {
   Business,
   CurrentBusiness,
   Product,
-  CurrentProduct
+  CurrentProduct,
+  Toast
 };

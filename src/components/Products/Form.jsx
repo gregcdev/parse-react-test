@@ -3,10 +3,11 @@ var PropTypes = React.PropTypes;
 var Parse = require('parse');
 var ParseReact = require('parse-react');
 
-var Chips = require('../Chips/Chips.jsx')
+var Chips = require('../Chips/Chips.jsx');
+var ImageUpload = require('../ImageUpload/ImageUpload.jsx');
 
 var Reflux = require('reflux');
-var Actions = require('../../reflux/Actions.jsx').CurrentProduct;
+var Actions = require('../../reflux/Actions.jsx');
 var Store = require('../../reflux/Store.jsx').CurrentProduct;
 
 var ProductForm = React.createClass({
@@ -18,25 +19,36 @@ var ProductForm = React.createClass({
   },
 
   getInitialState: function() {
-    return {frequency: "once"};
+    return {
+      frequency: "once",
+      images: [],
+      options: []
+     };
   },
 
-  mixins: [ParseReact.Mixin, Reflux.connect(Store)],
+  mixins: [Reflux.ListenerMixin],
 
   componentWillMount: function() {
-    Actions.setWithId(this.props.params.product_id);
+    if (this.props.params.product_id) {
+      this.listenTo(Store, this.gotProduct);
+      Actions.CurrentProduct.setWithId(this.props.params.product_id);
+      this.setState({loading: true});
+    }
   },
 
-  observe: function(props, state) {
-    var id = this.props.params['product_id'];
-    if (!id) {
+  componentWillUpdate: function(p, s, c) {
+    if (p.params.product_id !== this.state.objectId) {
+      Actions.CurrentProduct.setWithId(p.params.product_id);
+    }
+  },
+
+  gotProduct: function(product) {
+    if (!product) {
+      this.context.router.replace(this.context.rootPath + "products")
       return;
     }
-    return {
-      product: (new Parse.Query(Parse.Object.extend('Product')))
-      .equalTo('objectId', id)
-      .limit(1)
-    };
+    this.setState(product);
+    this.setState({loading: false});
   },
 
   onChangeName: function(e) {
@@ -53,38 +65,26 @@ var ProductForm = React.createClass({
   },
 
   frequencyChange: function(e) {
-    console.log(e.target.value)
     this.setState({frequency: e.target.value});
   },
 
   save: function() {
-    var name = this.state.name;
-    var description = this.state.description;
-    var price = this.state.price;
-    var owner = Parse.User.current();
-    var business = this.context.currentBusiness;
-    if (name === '' || description === '') {
-      return;
-    }
-    ParseReact.Mutation.Create('Product', {
-      name: name,
-      description: description,
-      price: Number(price),
-      owner: owner,
-      business: business
-    }).dispatch().then(function() {
-      this.context.router.push(this.context.rootPath + "products")
-    }.bind(this));
+    Actions.Product.save(this.state);
+  },
 
+  destroy: function() {
+    Actions.Product.destroy(this.state);
   },
 
   render: function() {
+
     return (
       <div className="panel col-sm-4">
         <div className="panel-body">
           <div className="form-group">
             <label>Name</label>
             <input
+              disabled={this.state.loading}
               className="form-control"
               type="text"
               value={this.state.name}
@@ -94,6 +94,7 @@ var ProductForm = React.createClass({
           <div className="form-group">
             <label>Description</label>
             <input
+              disabled={this.state.loading}
               className="form-control"
               type="text"
               value={this.state.description}
@@ -104,6 +105,7 @@ var ProductForm = React.createClass({
             <label>Price</label>
             <div className="input-group">
               <input
+                disabled={this.state.loading}
                 className="form-control"
                 type="number"
                 step="0.01"
@@ -111,7 +113,11 @@ var ProductForm = React.createClass({
                 onChange={this.onChangePrice}
                 placeholder="Price"/>
               <div className="input-group-btn">
-                <select className="btn btn-default" onChange={this.frequencyChange} value={this.state.frequency}>
+                <select className="btn btn-default"
+                  onChange={this.frequencyChange}
+                  value={this.state.frequency}
+                  defaultValue="once"
+                  disabled={this.state.loading}>
                   <option value="once">One Time</option>
                   <option value="week">Per Week</option>
                   <option value="month">Per Month</option>
@@ -120,10 +126,13 @@ var ProductForm = React.createClass({
               </div>
             </div>
           </div>
-          <button className="btn btn-primary" onClick={this.save}>Create</button>
+          <button className="btn btn-primary" onClick={this.save} disabled={this.state.loading}>Save</button>
         </div>
         <hr />
         <Chips />
+        <ImageUpload images={this.state.images}/>
+        <hr />
+        <div className="btn btn-danger" onClick={this.destroy} disabled={this.state.loading}>Destroy</div>
       </div>
     );
   }

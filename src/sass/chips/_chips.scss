@@ -4,6 +4,7 @@
   min-height: 38px;
   padding: 3px 3px;
   font-size: 14px;
+  cursor: text;
 }
 
 .chips__container.focused {
@@ -22,6 +23,7 @@
   background-color: #009688;
   font-weight: 700;
   color: #fff;
+  cursor: pointer;
 
   &.selected {
     background: #4DB6AC;
@@ -29,7 +31,8 @@
 }
 
 .chips__chip-close {
-  padding: 0px 2px 0px 6px;
+  padding-left: 4px;
+  line-height: 24px;
   cursor: pointer;
   &:hover {
     color: #ccc;
